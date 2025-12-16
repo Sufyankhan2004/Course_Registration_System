@@ -34,4 +34,26 @@ class AuthService {
     if (res == null) return null;
     return Profile.fromJson(res);
   }
+
+  Future<void> updateProfile({
+    required String userId,
+    String? name,
+    String? email,
+  }) async {
+    final updates = <String, dynamic>{};
+    if (name != null) updates['name'] = name;
+    if (email != null) updates['email'] = email;
+    
+    if (updates.isNotEmpty) {
+      await _c.from('profiles').update(updates).eq('id', userId);
+    }
+  }
+
+  Future<void> updatePassword(String newPassword) async {
+    await _c.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
+  User? getCurrentUser() {
+    return _c.auth.currentUser;
+  }
 }

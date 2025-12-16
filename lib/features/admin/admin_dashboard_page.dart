@@ -4,6 +4,10 @@ import '../../services/course_service.dart';
 import '../../services/registration_service.dart';
 import '../../models/course.dart';
 import '../../widgets/app_scaffold.dart';
+import '../../widgets/course_card.dart';
+import '../../widgets/stat_card.dart';
+import '../../core/theme/app_theme.dart';
+import 'screens/admin_profile_screen.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -50,13 +54,27 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     _load();
   }
 
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AdminProfileScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return AppScaffold(
       title: 'Admin Dashboard',
       actions: [
         IconButton(
+          icon: const Icon(Icons.account_circle),
+          tooltip: 'Profile',
+          onPressed: _openProfile,
+        ),
+        IconButton(
           icon: const Icon(Icons.logout),
+          tooltip: 'Logout',
           onPressed: () async {
             await AuthService().signOut();
             if (mounted) Navigator.of(context).pushReplacementNamed('/login');
@@ -75,89 +93,180 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (error != null)
-                    Text(error!, style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: theme.colorScheme.error),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              error!,
+                              style: TextStyle(color: theme.colorScheme.error),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  
+                  // Stats Cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: StatCard(
+                          title: 'Total Courses',
+                          value: '${courses.length}',
+                          icon: Icons.school,
+                          gradient: AppTheme.primaryGradient,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: StatCard(
+                          title: 'Total Registrations',
+                          value: '${registrations.length}',
+                          icon: Icons.assignment_turned_in,
+                          gradient: AppTheme.accentGradient,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
                   _SectionHeader(title: 'Courses', count: courses.length),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: courses
-                        .map((c) => SizedBox(
-                              width: 360,
-                              child: Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(c.courseCode,
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.w800,
-                                                  fontSize: 16)),
-                                          Row(
-                                            children: [
-                                              IconButton(
-                                                  onPressed: () => _openForm(c),
-                                                  icon: const Icon(Icons.edit)),
-                                              IconButton(
-                                                  onPressed: () async {
-                                                    await _courseService
-                                                        .deleteCourse(c.id);
-                                                    _load();
-                                                  },
-                                                  icon: const Icon(Icons.delete)),
-                                            ],
-                                          )
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(c.courseName,
-                                          style: const TextStyle(fontSize: 15)),
-                                      const SizedBox(height: 6),
-                                      Row(
-                                        children: [
-                                          _Chip(label: 'Credit: ${c.creditHours}'),
-                                          const SizedBox(width: 8),
-                                          _Chip(label: 'Sem: ${c.semester}'),
-                                        ],
-                                      ),
-                                    ],
+                  const SizedBox(height: 12),
+                  
+                  courses.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.school_outlined,
+                                  size: 64,
+                                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No courses yet',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Add your first course using the button below',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 400,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 1.3,
+                          ),
+                          itemCount: courses.length,
+                          itemBuilder: (context, index) {
+                            final course = courses[index];
+                            return CourseCard(
+                              course: course,
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, size: 20),
+                                    onPressed: () => _openForm(course),
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, size: 20),
+                                    onPressed: () async {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Delete Course'),
+                                          content: Text(
+                                            'Are you sure you want to delete ${course.courseName}?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              child: const Text('Delete'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (confirm == true) {
+                                        await _courseService.deleteCourse(course.id);
+                                        _load();
+                                      }
+                                    },
+                                    color: theme.colorScheme.error,
+                                  ),
+                                ],
                               ),
-                            ))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 20),
+                            );
+                          },
+                        ),
+                  const SizedBox(height: 32),
+                  
                   _SectionHeader(
                       title: 'All Registrations', count: registrations.length),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Card(
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('Student')),
-                        DataColumn(label: Text('Email')),
-                        DataColumn(label: Text('Course')),
-                        DataColumn(label: Text('Code')),
-                      ],
-                      rows: registrations
-                          .map(
-                            (r) => DataRow(cells: [
-                              DataCell(Text(r['profiles']['name'] ??
-                                  r['profiles']['email'] ??
-                                  '')),
-                              DataCell(Text(r['profiles']['email'] ?? '')),
-                              DataCell(Text(r['courses']['course_name'] ?? '')),
-                              DataCell(Text(r['courses']['course_code'] ?? '')),
-                            ]),
+                    child: registrations.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Center(
+                              child: Text(
+                                'No registrations yet',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
                           )
-                          .toList(),
-                    ),
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: DataTable(
+                              columns: const [
+                                DataColumn(label: Text('Student')),
+                                DataColumn(label: Text('Email')),
+                                DataColumn(label: Text('Course')),
+                                DataColumn(label: Text('Code')),
+                              ],
+                              rows: registrations
+                                  .map(
+                                    (r) => DataRow(cells: [
+                                      DataCell(Text(r['profiles']['name'] ??
+                                          r['profiles']['email'] ??
+                                          '')),
+                                      DataCell(Text(r['profiles']['email'] ?? '')),
+                                      DataCell(Text(r['courses']['course_name'] ?? '')),
+                                      DataCell(Text(r['courses']['course_code'] ?? '')),
+                                    ]),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
                   )
                 ],
               ),
