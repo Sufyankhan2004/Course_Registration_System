@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/course_service.dart';
 import '../../models/course.dart';
+import '../../widgets/course_card.dart';
 import 'register_course_page.dart';
+import 'screens/profile_screen.dart';
 
 class StudentDashboardPage extends StatefulWidget {
   const StudentDashboardPage({super.key});
@@ -43,14 +45,28 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
     _load();
   }
 
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Student Dashboard'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.account_circle),
+            tooltip: 'Profile',
+            onPressed: _openProfile,
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: () async {
               await AuthService().signOut();
               if (mounted) Navigator.of(context).pushReplacementNamed('/login');
@@ -74,72 +90,93 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (error != null)
-                        Text(error!, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 8),
-                      Text('Available Courses',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.error_outline, color: theme.colorScheme.error),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  error!,
+                                  style: TextStyle(color: theme.colorScheme.error),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Available Courses',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${courses.length}',
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       Expanded(
-                        child: Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: courses
-                              .map((c) => SizedBox(
-                                    width: 320,
-                                    child: Card(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(12),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text('${c.courseCode} - ${c.courseName}',
-                                                style: const TextStyle(
-                                                    fontWeight: FontWeight.w800,
-                                                    fontSize: 15)),
-                                            const SizedBox(height: 6),
-                                            Row(
-                                              children: [
-                                                _Chip(label: 'Credit: ${c.creditHours}'),
-                                                const SizedBox(width: 8),
-                                                _Chip(label: 'Sem: ${c.semester}'),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
+                        child: courses.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.school_outlined,
+                                      size: 64,
+                                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No courses available',
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
-                                  ))
-                              .toList(),
-                        ),
+                                  ],
+                                ),
+                              )
+                            : GridView.builder(
+                                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 380,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  childAspectRatio: 1.4,
+                                ),
+                                itemCount: courses.length,
+                                itemBuilder: (context, index) {
+                                  final course = courses[index];
+                                  return CourseCard(course: course);
+                                },
+                              ),
                       )
                     ],
                   ),
                 ),
               ),
             ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  final String label;
-  const _Chip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(label,
-          style: TextStyle(color: scheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
     );
   }
 }
