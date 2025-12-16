@@ -45,7 +45,8 @@ class _LoginPageState extends State<LoginPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: const [
                                 Text(
-                                  'Course Registration System',
+                                  'Course Registration System'
+                                  'by Usama',
                                   style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w800,

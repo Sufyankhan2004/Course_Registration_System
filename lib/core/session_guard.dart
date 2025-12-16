@@ -13,6 +13,15 @@ class SessionGuard extends StatefulWidget {
 class _SessionGuardState extends State<SessionGuard> {
   Profile? me;
   bool loading = true;
+  String? errorMessage;
+
+  void _redirect(String route) {
+    if (!mounted) return;
+    Future<void>.delayed(Duration.zero, () {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(route);
+    });
+  }
 
   @override
   void initState() {
@@ -24,33 +33,73 @@ class _SessionGuardState extends State<SessionGuard> {
   }
 
   Future<void> _load() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) {
-      if (mounted) Navigator.of(context).pushReplacementNamed('/login');
-      return;
-    }
-    final profile = await AuthService().getProfile(user.id);
-    setState(() {
-      me = profile;
-      loading = false;
-    });
-    if (profile == null) {
-      await Supabase.instance.client.auth.signOut();
-      if (mounted) Navigator.of(context).pushReplacementNamed('/login');
-      return;
-    }
-    if (mounted) {
-      if (profile.role == 'admin') {
-        Navigator.of(context).pushReplacementNamed('/admin');
-      } else {
-        Navigator.of(context).pushReplacementNamed('/student');
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        if (!mounted) return;
+        setState(() {
+          loading = false;
+          errorMessage = null;
+        });
+        _redirect('/login');
+        return;
       }
+
+      final profile = await AuthService().getProfile(user.id);
+      if (!mounted) return;
+
+      setState(() {
+        me = profile;
+        loading = false;
+        errorMessage = null;
+      });
+
+      if (profile == null) {
+        await Supabase.instance.client.auth.signOut();
+        if (mounted) _redirect('/login');
+        return;
+      }
+
+      if (profile.role == 'admin') {
+        _redirect('/admin');
+      } else {
+        _redirect('/student');
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        loading = false;
+        errorMessage = error.toString();
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
+    if (errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48),
+            const SizedBox(height: 12),
+            Text('Failed to load session\n$errorMessage', textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  loading = true;
+                  errorMessage = null;
+                });
+                _load();
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
     return widget.child;
   }
 }

@@ -4,13 +4,15 @@ A new Flutter project.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+Before running the app, you must configure Supabase credentials. The session guard relies on a Supabase session to route the user to the correct dashboard; missing credentials leave the app on the loading indicator.
 
-A few resources to get you started if this is your first Flutter project:
+1. Create a `.env` file or update your launch configuration with these values:
+	- `SUPABASE_URL`
+	- `SUPABASE_ANON_KEY`
+2. Pass them to Flutter with `--dart-define` flags, for example:
+	```bash
+	flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=public-anon-key
+	```
+3. Ensure the Supabase project has a `profiles` table with columns `id`, `name`, `email`, and `role`.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Once configured, run the app normally. If there is any startup failure, the splash screen now reports the error and offers a retry button.
