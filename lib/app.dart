@@ -5,6 +5,8 @@ import 'features/auth/signup_page.dart';
 import 'features/auth/splash_page.dart';
 import 'features/admin/admin_dashboard_page.dart';
 import 'features/student/student_dashboard_page.dart';
+import 'features/student/screens/profile_screen.dart';
+import 'features/admin/screens/admin_profile_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -21,6 +23,8 @@ class MyApp extends StatelessWidget {
         '/signup': (_) => const SignUpPage(),
         '/admin': (_) => const AdminDashboardPage(),
         '/student': (_) => const StudentDashboardPage(),
+        '/profile': (_) => const ProfileScreen(),
+        '/admin-profile': (_) => const AdminProfileScreen(),
       },
     );
   }
