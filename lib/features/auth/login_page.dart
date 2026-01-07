@@ -33,12 +33,18 @@ class _LoginPageState extends State<LoginPage> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
-            child: LayoutBuilder(
-              builder: (context, c) {
-                final wide = c.maxWidth > 720;
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              top: 32,
+              bottom: 32 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: LayoutBuilder(
+                  builder: (context, c) {
+                    final wide = c.maxWidth > 720;
                 return Card(
                   elevation: 8,
                   shadowColor: Colors.black.withOpacity(0.1),
@@ -210,6 +216,8 @@ class _LoginPageState extends State<LoginPage> {
                 );
               },
             ),
+          ),
+        ),
           ),
         ),
       ),

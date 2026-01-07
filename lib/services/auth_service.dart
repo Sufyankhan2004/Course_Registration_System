@@ -13,7 +13,8 @@ class AuthService {
     final res = await _c.auth.signUp(email: email, password: password);
     final user = res.user;
     if (user != null) {
-      await _c.from('profiles').insert({
+      // Use upsert to insert or update the profile
+      await _c.from('profiles').upsert({
         'id': user.id,
         'name': name,
         'email': email,

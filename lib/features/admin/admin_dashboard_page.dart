@@ -333,8 +333,8 @@ class _CourseFormPageState extends State<CourseFormPage> {
   final _form = GlobalKey<FormState>();
   final _code = TextEditingController();
   final _name = TextEditingController();
-  final _credit = TextEditingController();
-  final _semester = TextEditingController();
+  int _selectedCredit = 3; // Default credit hours
+  int _selectedSemester = 1; // Default semester
   final _service = CourseService();
   bool loading = false;
   String? error;
@@ -345,8 +345,8 @@ class _CourseFormPageState extends State<CourseFormPage> {
     if (widget.course != null) {
       _code.text = widget.course!.courseCode;
       _name.text = widget.course!.courseName;
-      _credit.text = widget.course!.creditHours.toString();
-      _semester.text = widget.course!.semester.toString();
+      _selectedCredit = widget.course!.creditHours;
+      _selectedSemester = widget.course!.semester;
     }
   }
 
@@ -355,69 +355,94 @@ class _CourseFormPageState extends State<CourseFormPage> {
     final isEdit = widget.course != null;
     return AppScaffold(
       title: isEdit ? 'Edit Course' : 'Add Course',
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _form,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: _code,
-                      decoration: const InputDecoration(labelText: 'Course Code'),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            top: 16,
+            left: 16,
+            right: 16,
+            bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _form,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: _code,
+                          decoration: const InputDecoration(labelText: 'Course Code'),
+                          validator: (v) => v!.isEmpty ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _name,
+                          decoration: const InputDecoration(labelText: 'Course Name'),
+                          validator: (v) => v!.isEmpty ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<int>(
+                          value: _selectedCredit,
+                          decoration: const InputDecoration(labelText: 'Credit Hours'),
+                          items: const [
+                            DropdownMenuItem(value: 1, child: Text('1')),
+                            DropdownMenuItem(value: 2, child: Text('2')),
+                            DropdownMenuItem(value: 3, child: Text('3')),
+                            DropdownMenuItem(value: 4, child: Text('4')),
+                          ],
+                          onChanged: (v) => setState(() => _selectedCredit = v ?? 3),
+                          validator: (v) => v == null ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<int>(
+                          value: _selectedSemester,
+                          decoration: const InputDecoration(labelText: 'Semester'),
+                          items: const [
+                            DropdownMenuItem(value: 1, child: Text('1')),
+                            DropdownMenuItem(value: 2, child: Text('2')),
+                            DropdownMenuItem(value: 3, child: Text('3')),
+                            DropdownMenuItem(value: 4, child: Text('4')),
+                            DropdownMenuItem(value: 5, child: Text('5')),
+                            DropdownMenuItem(value: 6, child: Text('6')),
+                            DropdownMenuItem(value: 7, child: Text('7')),
+                            DropdownMenuItem(value: 8, child: Text('8')),
+                          ],
+                          onChanged: (v) => setState(() => _selectedSemester = v ?? 1),
+                          validator: (v) => v == null ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 14),
+                        if (error != null)
+                          Text(error!, style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: loading ? null : _submit,
+                            child: loading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2))
+                                : Text(isEdit ? 'Update' : 'Create'),
+                          ),
+                        )
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _name,
-                      decoration: const InputDecoration(labelText: 'Course Name'),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _credit,
-                      decoration:
-                          const InputDecoration(labelText: 'Credit Hours (int)'),
-                      keyboardType: TextInputType.number,
-                      validator: (v) =>
-                          int.tryParse(v ?? '') != null ? null : 'Number required',
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _semester,
-                      decoration: const InputDecoration(labelText: 'Semester (int)'),
-                      keyboardType: TextInputType.number,
-                      validator: (v) =>
-                          int.tryParse(v ?? '') != null ? null : 'Number required',
-                    ),
-                    const SizedBox(height: 14),
-                    if (error != null)
-                      Text(error!, style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: loading ? null : _submit,
-                        child: loading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2))
-                            : Text(isEdit ? 'Update' : 'Create'),
-                      ),
-                    )
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    );
+        );
+      
+    
   }
 
   Future<void> _submit() async {
@@ -427,18 +452,16 @@ class _CourseFormPageState extends State<CourseFormPage> {
       error = null;
     });
     try {
-      final credit = int.parse(_credit.text);
-      final sem = int.parse(_semester.text);
       if (widget.course == null) {
         await _service.addCourse(
-            code: _code.text, name: _name.text, creditHours: credit, semester: sem);
+            code: _code.text, name: _name.text, creditHours: _selectedCredit, semester: _selectedSemester);
       } else {
         await _service.updateCourse(
             id: widget.course!.id,
             code: _code.text,
             name: _name.text,
-            creditHours: credit,
-            semester: sem);
+            creditHours: _selectedCredit,
+            semester: _selectedSemester);
       }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
